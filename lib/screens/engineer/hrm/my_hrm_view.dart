@@ -205,6 +205,9 @@ class _MyHrmViewState extends ConsumerState<MyHrmView> {
           const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
           // Report List
+          if (reportState.error != null && reportState.reportData == null)
+            SliverToBoxAdapter(child: Center(child: Padding(padding: const EdgeInsets.all(32), child: Text(reportState.error!, style: const TextStyle(color: Colors.red))))),
+          
           if (reportState.isLoading && reportState.reportData == null)
             const SliverToBoxAdapter(child: Center(child: Padding(padding: EdgeInsets.all(32), child: CircularProgressIndicator()))),
           

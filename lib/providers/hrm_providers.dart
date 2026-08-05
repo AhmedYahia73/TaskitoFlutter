@@ -9,7 +9,7 @@ final attendanceStatusProvider = FutureProvider.autoDispose<AttendanceStatusMode
   final api = ref.read(apiServiceProvider);
   try {
     final response = await api.dio.get('/api/user/attendance/status');
-    return AttendanceStatusModel.fromJson(response.data);
+    return AttendanceStatusModel.fromJson(response.data['data'] ?? response.data);
   } catch (e) {
     throw Exception('Failed to load attendance status: $e');
   }
@@ -99,6 +99,7 @@ class AttendanceReportNotifier extends StateNotifier<AttendanceReportState> {
         }
       }
     } catch (e) {
+      print('Error fetching attendance report: $e');
       state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
