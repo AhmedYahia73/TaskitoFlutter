@@ -167,12 +167,12 @@ final tasksProvider = StateNotifierProvider.family<TasksNotifier, PaginationStat
 
 final projectUsersProvider = FutureProvider.family<List<UserModel>, String>((ref, projectId) async {
   final api = ref.read(apiServiceProvider);
-  final response = await api.dio.get('/api/admin/projects/$projectId/users');
+  final response = await api.dio.get('/api/admin/project/$projectId/users');
   return (response.data['data']['users'] as List).map((e) => UserModel.fromJson(e)).toList();
 });
 
 final groupUsersProvider = FutureProvider.family<List<UserModel>, String>((ref, groupId) async {
   final api = ref.read(apiServiceProvider);
-  final response = await api.dio.get('/api/admin/project-groups/$groupId/users');
+  final response = await api.dio.get('/api/admin/projectGroup/$groupId/users');
   return (response.data['data']['users'] as List).map((e) => UserModel.fromJson(e)).toList();
 });

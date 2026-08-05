@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/dashboard_provider.dart';
 import '../../models/dashboard_stats.dart';
 import 'hrm/my_hrm_view.dart' as hrm;
+import '../../providers/hrm_providers.dart';
 
 class EngineerDashboard extends ConsumerStatefulWidget {
   const EngineerDashboard({super.key});
@@ -13,6 +14,7 @@ class EngineerDashboard extends ConsumerStatefulWidget {
 
 class _EngineerDashboardState extends ConsumerState<EngineerDashboard> {
   int _selectedYear = DateTime.now().year;
+  bool _isChecking = false;
 
   @override
   Widget build(BuildContext context) {
@@ -45,6 +47,8 @@ class _EngineerDashboardState extends ConsumerState<EngineerDashboard> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            _buildMyHrmPortalCard(context),
+            const SizedBox(height: 16),
             _buildCheckInCard(context),
             const SizedBox(height: 24),
             Text(
@@ -121,7 +125,62 @@ class _EngineerDashboardState extends ConsumerState<EngineerDashboard> {
     );
   }
 
+  Widget _buildMyHrmPortalCard(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const hrm.MyHrmView()),
+        );
+      },
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Theme.of(context).primaryColor, Theme.of(context).primaryColor.withOpacity(0.8)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Theme.of(context).primaryColor.withOpacity(0.3),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Row(
+              children: [
+                Icon(Icons.dashboard_customize, color: Colors.white, size: 28),
+                SizedBox(width: 16),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('My HRM Portal', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
+                    Text('Manage attendance & requests', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                  ],
+                ),
+              ],
+            ),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), shape: BoxShape.circle),
+              child: const Icon(Icons.arrow_forward_ios, color: Colors.white, size: 16),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildCheckInCard(BuildContext context) {
+    final statusAsync = ref.watch(attendanceStatusProvider);
+    
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
@@ -137,53 +196,79 @@ class _EngineerDashboardState extends ConsumerState<EngineerDashboard> {
           ),
         ],
       ),
-      child: Column(
-        children: [
-          Text(
-            'Ready to start your day?',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-                ),
-          ),
-          const SizedBox(height: 20),
-          GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const hrm.MyHrmView()),
-              );
-            },
-            child: Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Theme.of(context).primaryColor.withOpacity(0.1),
-                border: Border.all(color: Theme.of(context).primaryColor, width: 3),
-                boxShadow: [
-                  BoxShadow(
-                    color: Theme.of(context).primaryColor.withOpacity(0.2),
-                    blurRadius: 15,
-                    spreadRadius: 2,
+      child: statusAsync.when(
+        data: (status) {
+          return Column(
+            children: [
+              Text(
+                status.isCheckedIn ? 'You are currently checked in' : 'Ready to start your day?',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: status.isCheckedIn ? Colors.amber.shade700 : Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                    ),
+              ),
+              const SizedBox(height: 20),
+              GestureDetector(
+                onTap: _isChecking
+                    ? null
+                    : () async {
+                        setState(() => _isChecking = true);
+                        try {
+                          final actions = ref.read(hrmActionsProvider);
+                          if (status.isCheckedIn) {
+                            await actions.checkOut();
+                            if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Successfully checked out!')));
+                          } else {
+                            await actions.checkIn();
+                            if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Successfully checked in!')));
+                          }
+                          ref.invalidate(attendanceStatusProvider);
+                        } catch (e) {
+                          if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+                        } finally {
+                          if (mounted) setState(() => _isChecking = false);
+                        }
+                      },
+                child: Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: status.isCheckedIn ? Colors.amber.withOpacity(0.1) : Theme.of(context).primaryColor.withOpacity(0.1),
+                    border: Border.all(color: status.isCheckedIn ? Colors.amber : Theme.of(context).primaryColor, width: 3),
+                    boxShadow: [
+                      BoxShadow(
+                        color: status.isCheckedIn ? Colors.amber.withOpacity(0.2) : Theme.of(context).primaryColor.withOpacity(0.2),
+                        blurRadius: 15,
+                        spreadRadius: 2,
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              child: Icon(
-                Icons.fingerprint,
-                size: 80,
-                color: Theme.of(context).primaryColor,
-              ),
-            ),
-          ),
-          const SizedBox(height: 24),
-          Text(
-            'Tap to Check In',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).primaryColor,
+                  child: _isChecking
+                      ? const SizedBox(
+                          width: 80,
+                          height: 80,
+                          child: CircularProgressIndicator(),
+                        )
+                      : Icon(
+                          status.isCheckedIn ? Icons.logout : Icons.fingerprint,
+                          size: 80,
+                          color: status.isCheckedIn ? Colors.amber : Theme.of(context).primaryColor,
+                        ),
                 ),
-          ),
-        ],
+              ),
+              const SizedBox(height: 24),
+              Text(
+                status.isCheckedIn ? 'Tap to Check Out' : 'Tap to Check In',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: status.isCheckedIn ? Colors.amber.shade700 : Theme.of(context).primaryColor,
+                    ),
+              ),
+            ],
+          );
+        },
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (err, _) => Center(child: Text('Error: $err')),
       ),
     );
   }
