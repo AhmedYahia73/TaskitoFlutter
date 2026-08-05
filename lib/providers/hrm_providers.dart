@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import '../models/hrm_models.dart';
 import '../services/api_service.dart';
+import 'data_providers.dart';
 
 // Provider for checking attendance status
 final attendanceStatusProvider = FutureProvider.autoDispose<AttendanceStatusModel>((ref) async {

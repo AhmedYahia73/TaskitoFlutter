@@ -185,7 +185,7 @@ class _MyHrmViewState extends ConsumerState<MyHrmView> {
                         '\$${reportState.reportData!.financials!.bonuses.where((b) => b.type == 'amount').fold(0.0, (sum, b) => sum + (b.amount is num ? b.amount : double.tryParse(b.amount.toString()) ?? 0))}',
                         'Days: ${reportState.reportData!.financials!.bonuses.where((b) => b.type == 'days').fold(0.0, (sum, b) => sum + (b.amount is num ? b.amount : double.tryParse(b.amount.toString()) ?? 0))}',
                         Colors.teal,
-                        Colors.emerald,
+                        Colors.tealAccent,
                         Icons.card_giftcard,
                       ),
                       _buildGradientCard(
@@ -193,7 +193,7 @@ class _MyHrmViewState extends ConsumerState<MyHrmView> {
                         '\$${reportState.reportData!.financials!.deductions.where((d) => d.type == 'amount').fold(0.0, (sum, d) => sum + (d.amount is num ? d.amount : double.tryParse(d.amount.toString()) ?? 0))}',
                         'Days: ${reportState.reportData!.financials!.deductions.where((d) => d.type == 'days').fold(0.0, (sum, d) => sum + (d.amount is num ? d.amount : double.tryParse(d.amount.toString()) ?? 0))}',
                         Colors.red.shade700,
-                        Colors.rose,
+                        Colors.pink,
                         Icons.money_off,
                       ),
                     ],
