@@ -26,7 +26,7 @@ class _MyHrmViewState extends ConsumerState<MyHrmView> {
 
     _scrollController.addListener(() {
       if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
-        ref.read(attendanceReportProvider({'from': _fromDate, 'to': _toDate}).notifier).fetchNextPage();
+        ref.read(attendanceReportProvider('$_fromDate|$_toDate').notifier).fetchNextPage();
       }
     });
   }
@@ -49,7 +49,7 @@ class _MyHrmViewState extends ConsumerState<MyHrmView> {
         if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Successfully checked out!')));
       }
       ref.invalidate(attendanceStatusProvider);
-      ref.read(attendanceReportProvider({'from': _fromDate, 'to': _toDate}).notifier).fetchFirstPage();
+      ref.read(attendanceReportProvider('$_fromDate|$_toDate').notifier).fetchFirstPage();
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
     } finally {
@@ -60,7 +60,7 @@ class _MyHrmViewState extends ConsumerState<MyHrmView> {
   @override
   Widget build(BuildContext context) {
     final statusAsync = ref.watch(attendanceStatusProvider);
-    final reportState = ref.watch(attendanceReportProvider({'from': _fromDate, 'to': _toDate}));
+    final reportState = ref.watch(attendanceReportProvider('$_fromDate|$_toDate'));
 
     return Scaffold(
       appBar: AppBar(
@@ -140,7 +140,7 @@ class _MyHrmViewState extends ConsumerState<MyHrmView> {
                         child: _buildDatePicker('From', _fromDate, (val) {
                           setState(() {
                             _fromDate = val;
-                            ref.read(attendanceReportProvider({'from': _fromDate, 'to': _toDate}).notifier).fetchFirstPage();
+                            ref.read(attendanceReportProvider('$_fromDate|$_toDate').notifier).fetchFirstPage();
                           });
                         }),
                       ),
@@ -149,7 +149,7 @@ class _MyHrmViewState extends ConsumerState<MyHrmView> {
                         child: _buildDatePicker('To', _toDate, (val) {
                           setState(() {
                             _toDate = val;
-                            ref.read(attendanceReportProvider({'from': _fromDate, 'to': _toDate}).notifier).fetchFirstPage();
+                            ref.read(attendanceReportProvider('$_fromDate|$_toDate').notifier).fetchFirstPage();
                           });
                         }),
                       ),

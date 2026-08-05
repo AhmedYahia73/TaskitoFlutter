@@ -105,9 +105,10 @@ class AttendanceReportNotifier extends StateNotifier<AttendanceReportState> {
   }
 }
 
-// Family provider to pass 'from' and 'to' dates
-final attendanceReportProvider = StateNotifierProvider.family<AttendanceReportNotifier, AttendanceReportState, Map<String, String>>((ref, dates) {
-  return AttendanceReportNotifier(ref.read(apiServiceProvider), dates['from']!, dates['to']!);
+// Family provider to pass 'from' and 'to' dates as a single string "from|to"
+final attendanceReportProvider = StateNotifierProvider.family<AttendanceReportNotifier, AttendanceReportState, String>((ref, dateRange) {
+  final parts = dateRange.split('|');
+  return AttendanceReportNotifier(ref.read(apiServiceProvider), parts[0], parts[1]);
 });
 
 // Helper class for HRM Actions
