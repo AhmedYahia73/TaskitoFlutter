@@ -4,9 +4,9 @@ import '../../providers/data_providers.dart';
 import '../../models/app_models.dart';
 
 class GroupTasksView extends ConsumerStatefulWidget {
-  final int groupId;
+  final String groupId;
   final String groupName;
-  final int projectId;
+  final String projectId;
 
   const GroupTasksView({
     super.key,
@@ -20,9 +20,27 @@ class GroupTasksView extends ConsumerStatefulWidget {
 }
 
 class _GroupTasksViewState extends ConsumerState<GroupTasksView> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(() {
+      if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+        ref.read(tasksProvider(widget.groupId).notifier).fetchNextPage();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final tasksAsync = ref.watch(tasksProvider(widget.groupId));
+    final state = ref.watch(tasksProvider(widget.groupId));
 
     return Scaffold(
       appBar: AppBar(
@@ -37,23 +55,29 @@ class _GroupTasksViewState extends ConsumerState<GroupTasksView> {
         elevation: 0.5,
         foregroundColor: Theme.of(context).primaryColor,
       ),
-      body: tasksAsync.when(
-        data: (tasks) {
-          if (tasks.isEmpty) {
-            return const Center(child: Text('No tasks found in this group.'));
-          }
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: tasks.length,
-            itemBuilder: (context, index) {
-              final task = tasks[index];
-              return _buildTaskCard(task, context);
-            },
-          );
-        },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) => Center(child: Text('Error: $err')),
-      ),
+      body: state.error != null && state.items.isEmpty
+          ? Center(child: Text('Error: ${state.error}'))
+          : state.isLoading && state.items.isEmpty
+              ? const Center(child: CircularProgressIndicator())
+              : state.items.isEmpty
+                  ? const Center(child: Text('No tasks found in this group.'))
+                  : ListView.builder(
+                      controller: _scrollController,
+                      padding: const EdgeInsets.all(16),
+                      itemCount: state.items.length + (state.hasMore ? 1 : 0),
+                      itemBuilder: (context, index) {
+                        if (index == state.items.length) {
+                          return const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(16.0),
+                              child: CircularProgressIndicator(),
+                            ),
+                          );
+                        }
+                        final task = state.items[index];
+                        return _buildTaskCard(task, context);
+                      },
+                    ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddTaskModal(context),
         backgroundColor: Theme.of(context).primaryColor,
@@ -71,7 +95,7 @@ class _GroupTasksViewState extends ConsumerState<GroupTasksView> {
         projectId: widget.projectId,
         groupId: widget.groupId,
         onTaskAdded: () {
-          ref.invalidate(tasksProvider(widget.groupId));
+          ref.read(tasksProvider(widget.groupId).notifier).invalidate();
         },
       ),
     );
@@ -246,8 +270,8 @@ class _GroupTasksViewState extends ConsumerState<GroupTasksView> {
 }
 
 class _AddTaskSheet extends ConsumerStatefulWidget {
-  final int projectId;
-  final int groupId;
+  final String projectId;
+  final String groupId;
   final VoidCallback onTaskAdded;
 
   const _AddTaskSheet({required this.projectId, required this.groupId, required this.onTaskAdded});

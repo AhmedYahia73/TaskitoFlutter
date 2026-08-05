@@ -5,35 +5,162 @@ import '../services/api_service.dart';
 
 final apiServiceProvider = Provider((ref) => ApiService());
 
-final projectsProvider = FutureProvider<List<ProjectModel>>((ref) async {
-  final api = ref.read(apiServiceProvider);
-  try {
-    final response = await api.dio.get('/api/admin/project?limit=100');
-    final List<dynamic> projectsJson = response.data['Projects'] ?? [];
-    return projectsJson.map((json) => ProjectModel.fromJson(json)).toList();
-  } catch (e) {
-    throw Exception('Failed to load projects: $e');
+class PaginationState<T> {
+  final List<T> items;
+  final bool isLoading;
+  final bool hasMore;
+  final int page;
+  final String? error;
+
+  PaginationState({
+    required this.items,
+    this.isLoading = false,
+    this.hasMore = true,
+    this.page = 1,
+    this.error,
+  });
+
+  PaginationState<T> copyWith({
+    List<T>? items,
+    bool? isLoading,
+    bool? hasMore,
+    int? page,
+    String? error,
+  }) {
+    return PaginationState<T>(
+      items: items ?? this.items,
+      isLoading: isLoading ?? this.isLoading,
+      hasMore: hasMore ?? this.hasMore,
+      page: page ?? this.page,
+      error: error,
+    );
   }
+}
+
+class ProjectsNotifier extends StateNotifier<PaginationState<ProjectModel>> {
+  final ApiService api;
+  ProjectsNotifier(this.api) : super(PaginationState(items: [])) {
+    fetchFirstPage();
+  }
+
+  Future<void> fetchFirstPage() async {
+    state = state.copyWith(isLoading: true, page: 1, items: [], error: null, hasMore: true);
+    await _fetchData();
+  }
+
+  Future<void> fetchNextPage() async {
+    if (state.isLoading || !state.hasMore) return;
+    state = state.copyWith(isLoading: true, page: state.page + 1);
+    await _fetchData();
+  }
+
+  Future<void> _fetchData() async {
+    try {
+      final response = await api.dio.get('/api/admin/project?page=${state.page}&limit=10');
+      final List<dynamic> jsonList = response.data['data']['Projects'] ?? [];
+      final List<ProjectModel> newItems = jsonList.map((j) => ProjectModel.fromJson(j)).toList();
+      
+      final int totalPages = response.data['data']['pagination']['totalPages'] ?? 1;
+
+      state = state.copyWith(
+        items: [...state.items, ...newItems],
+        hasMore: state.page < totalPages,
+        isLoading: false,
+      );
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+    }
+  }
+}
+
+final projectsProvider = StateNotifierProvider<ProjectsNotifier, PaginationState<ProjectModel>>((ref) {
+  return ProjectsNotifier(ref.read(apiServiceProvider));
 });
 
-final groupsProvider = FutureProvider.family<List<GroupModel>, int>((ref, projectId) async {
-  final api = ref.read(apiServiceProvider);
-  try {
-    final response = await api.dio.get('/api/admin/projectGroup?project_id=$projectId&limit=100');
-    final List<dynamic> groupsJson = response.data['groups'] ?? [];
-    return groupsJson.map((json) => GroupModel.fromJson(json)).toList();
-  } catch (e) {
-    throw Exception('Failed to load groups: $e');
+class GroupsNotifier extends StateNotifier<PaginationState<GroupModel>> {
+  final ApiService api;
+  final String projectId;
+  
+  GroupsNotifier(this.api, this.projectId) : super(PaginationState(items: [])) {
+    fetchFirstPage();
   }
+
+  Future<void> fetchFirstPage() async {
+    state = state.copyWith(isLoading: true, page: 1, items: [], error: null, hasMore: true);
+    await _fetchData();
+  }
+
+  Future<void> fetchNextPage() async {
+    if (state.isLoading || !state.hasMore) return;
+    state = state.copyWith(isLoading: true, page: state.page + 1);
+    await _fetchData();
+  }
+
+  Future<void> _fetchData() async {
+    try {
+      final response = await api.dio.get('/api/admin/projectGroup?project_id=$projectId&page=${state.page}&limit=10');
+      final List<dynamic> jsonList = response.data['data']['groups'] ?? [];
+      final List<GroupModel> newItems = jsonList.map((j) => GroupModel.fromJson(j)).toList();
+      
+      final int totalPages = response.data['data']['pagination']['totalPages'] ?? 1;
+
+      state = state.copyWith(
+        items: [...state.items, ...newItems],
+        hasMore: state.page < totalPages,
+        isLoading: false,
+      );
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+    }
+  }
+}
+
+final groupsProvider = StateNotifierProvider.family<GroupsNotifier, PaginationState<GroupModel>, String>((ref, projectId) {
+  return GroupsNotifier(ref.read(apiServiceProvider), projectId);
 });
 
-final tasksProvider = FutureProvider.family<List<TaskModel>, int>((ref, groupId) async {
-  final api = ref.read(apiServiceProvider);
-  try {
-    final response = await api.dio.get('/api/admin/tasks?group_id=$groupId&limit=100');
-    final List<dynamic> tasksJson = response.data['tasks'] ?? [];
-    return tasksJson.map((json) => TaskModel.fromJson(json)).toList();
-  } catch (e) {
-    throw Exception('Failed to load tasks: $e');
+class TasksNotifier extends StateNotifier<PaginationState<TaskModel>> {
+  final ApiService api;
+  final String groupId;
+  
+  TasksNotifier(this.api, this.groupId) : super(PaginationState(items: [])) {
+    fetchFirstPage();
   }
+
+  Future<void> fetchFirstPage() async {
+    state = state.copyWith(isLoading: true, page: 1, items: [], error: null, hasMore: true);
+    await _fetchData();
+  }
+
+  Future<void> fetchNextPage() async {
+    if (state.isLoading || !state.hasMore) return;
+    state = state.copyWith(isLoading: true, page: state.page + 1);
+    await _fetchData();
+  }
+
+  Future<void> _fetchData() async {
+    try {
+      final response = await api.dio.get('/api/admin/tasks?group_id=$groupId&page=${state.page}&limit=10');
+      final List<dynamic> jsonList = response.data['data']['tasks'] ?? [];
+      final List<TaskModel> newItems = jsonList.map((j) => TaskModel.fromJson(j)).toList();
+      
+      final int totalPages = response.data['data']['pagination']['totalPages'] ?? 1;
+
+      state = state.copyWith(
+        items: [...state.items, ...newItems],
+        hasMore: state.page < totalPages,
+        isLoading: false,
+      );
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+    }
+  }
+  
+  void invalidate() {
+    fetchFirstPage();
+  }
+}
+
+final tasksProvider = StateNotifierProvider.family<TasksNotifier, PaginationState<TaskModel>, String>((ref, groupId) {
+  return TasksNotifier(ref.read(apiServiceProvider), groupId);
 });

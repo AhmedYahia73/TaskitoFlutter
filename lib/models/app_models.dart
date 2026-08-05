@@ -1,5 +1,5 @@
 class UserModel {
-  final int id;
+  final String id;
   final String name;
   final String email;
   final String? image;
@@ -15,7 +15,7 @@ class UserModel {
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
-      id: json['id'] ?? 0,
+      id: json['id']?.toString() ?? '',
       name: json['name'] ?? '',
       email: json['email'] ?? '',
       image: json['image'],
@@ -24,8 +24,16 @@ class UserModel {
   }
 }
 
+int _parseInt(dynamic value) {
+  if (value == null) return 0;
+  if (value is int) return value;
+  if (value is double) return value.toInt();
+  if (value is String) return double.tryParse(value)?.toInt() ?? 0;
+  return 0;
+}
+
 class ProjectModel {
-  final int id;
+  final String id;
   final String name;
   final String? description;
   final String? documentation;
@@ -49,12 +57,12 @@ class ProjectModel {
 
   factory ProjectModel.fromJson(Map<String, dynamic> json) {
     return ProjectModel(
-      id: json['id'] ?? 0,
+      id: json['id']?.toString() ?? '',
       name: json['name'] ?? '',
       description: json['description'],
       documentation: json['documentation'],
-      progress: json['progress'] ?? 0,
-      doneProgress: json['done_progress'] ?? 0,
+      progress: _parseInt(json['progress']),
+      doneProgress: _parseInt(json['done_progress']),
       testerName: json['tester_name'],
       testerImage: json['tester_image'],
       users: (json['users'] as List<dynamic>?)
@@ -66,7 +74,7 @@ class ProjectModel {
 }
 
 class GroupModel {
-  final int id;
+  final String id;
   final String name;
   final String? description;
   final String? documentation;
@@ -86,19 +94,19 @@ class GroupModel {
 
   factory GroupModel.fromJson(Map<String, dynamic> json) {
     return GroupModel(
-      id: json['id'] ?? 0,
+      id: json['id']?.toString() ?? '',
       name: json['name'] ?? '',
       description: json['description'],
       documentation: json['documentation'],
-      progress: json['progress'] ?? 0,
-      doneProgress: json['done_progress'] ?? 0,
+      progress: _parseInt(json['progress']),
+      doneProgress: _parseInt(json['done_progress']),
       createdAt: json['createdAt'] ?? '',
     );
   }
 }
 
 class TaskModel {
-  final int id;
+  final String id;
   final String name;
   final String? description;
   final String status;
@@ -106,7 +114,7 @@ class TaskModel {
   final String? deliveryDate;
   final String? testerNote;
   final String? documentation;
-  final int? userId;
+  final String? userId;
   final String? userName;
   final String? userImage;
 
@@ -126,7 +134,7 @@ class TaskModel {
 
   factory TaskModel.fromJson(Map<String, dynamic> json) {
     return TaskModel(
-      id: json['id'] ?? 0,
+      id: json['id']?.toString() ?? '',
       name: json['name'] ?? '',
       description: json['description'],
       status: json['status'] ?? 'pending',
@@ -134,7 +142,7 @@ class TaskModel {
       deliveryDate: json['delivery_date'],
       testerNote: json['tester_note'],
       documentation: json['documentation'],
-      userId: json['user_id'],
+      userId: json['user_id']?.toString(),
       userName: json['user_name'],
       userImage: json['user_image'],
     );
