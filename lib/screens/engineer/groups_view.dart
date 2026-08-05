@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/data_providers.dart';
+import '../../widgets/team_avatars.dart';
 import 'group_tasks_view.dart';
 
 class GroupsView extends ConsumerStatefulWidget {
@@ -136,6 +137,8 @@ class _GroupsViewState extends ConsumerState<GroupsView> {
                                     ),
                                   ],
                                 ),
+                                const SizedBox(height: 12),
+                                TeamAvatars(provider: groupUsersProvider(group.id)),
                               ],
                             ),
                           ),
