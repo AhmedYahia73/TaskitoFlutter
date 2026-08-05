@@ -101,6 +101,73 @@ class _GroupTasksViewState extends ConsumerState<GroupTasksView> {
     );
   }
 
+  Future<void> _changeTaskStatus(TaskModel task, String newStatus) async {
+    if (task.status == newStatus) return;
+    
+    try {
+      final api = ref.read(apiServiceProvider);
+      await api.dio.put('/api/admin/tasks/${task.id}', data: {
+        'status': newStatus,
+      });
+      ref.read(tasksProvider(widget.groupId).notifier).invalidate();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to update status: $e')));
+      }
+    }
+  }
+
+  void _showStatusMenu(BuildContext context, TaskModel task) {
+    if (task.status == 'approve' || task.status == 'edit') {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Cannot change status of approved or edited tasks.')));
+      return;
+    }
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      builder: (ctx) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Padding(
+                padding: EdgeInsets.all(16.0),
+                child: Text('Change Task Status', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              ),
+              ListTile(
+                leading: const Icon(Icons.schedule, color: Colors.amber),
+                title: const Text('Pending'),
+                trailing: task.status == 'pending' ? const Icon(Icons.check, color: Colors.amber) : null,
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _changeTaskStatus(task, 'pending');
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.autorenew, color: Colors.blue),
+                title: const Text('In Progress'),
+                trailing: task.status == 'inprogress' ? const Icon(Icons.check, color: Colors.blue) : null,
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _changeTaskStatus(task, 'inprogress');
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.check_circle, color: Colors.green),
+                title: const Text('Done'),
+                trailing: task.status == 'done' ? const Icon(Icons.check, color: Colors.green) : null,
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _changeTaskStatus(task, 'done');
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildTaskCard(TaskModel task, BuildContext context) {
     Color statusColor;
     String statusLabel;
@@ -214,15 +281,28 @@ class _GroupTasksViewState extends ConsumerState<GroupTasksView> {
                   ),
                 ],
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: statusColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  statusLabel,
-                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: statusColor),
+              GestureDetector(
+                onTap: () => _showStatusMenu(context, task),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: statusColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: statusColor.withOpacity(0.3)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        statusLabel,
+                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: statusColor),
+                      ),
+                      if (task.status != 'approve' && task.status != 'edit') ...[
+                        const SizedBox(width: 4),
+                        Icon(Icons.arrow_drop_down, size: 14, color: statusColor),
+                      ],
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -302,7 +382,7 @@ class _AddTaskSheetState extends ConsumerState<_AddTaskSheet> {
         'status': 'pending',
         'project_id': widget.projectId,
         'group_id': widget.groupId,
-        // Engineer adding a task defaults to themselves or unassigned based on backend logic.
+        'users_ids': ['00000000-0000-4000-8000-000000000000'], // Dummy UUID, backend overwrites this with the logged-in engineer's ID
       });
       
       widget.onTaskAdded();

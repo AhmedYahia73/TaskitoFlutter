@@ -38,7 +38,7 @@ class _GroupsViewState extends ConsumerState<GroupsView> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(projectName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+        title: Text(widget.projectName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
         backgroundColor: Theme.of(context).cardColor,
         elevation: 0.5,
         foregroundColor: Theme.of(context).primaryColor,
