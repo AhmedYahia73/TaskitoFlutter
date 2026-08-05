@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/data_providers.dart';
+import '../../widgets/team_avatars.dart';
 import 'groups_view.dart';
 
 class ProjectsView extends ConsumerStatefulWidget {
@@ -119,26 +120,50 @@ class _ProjectsViewState extends ConsumerState<ProjectsView> {
                                   const SizedBox(height: 8),
                                   _buildProgressRow(context, 'Done', project.doneProgress, Colors.red),
                                   if (project.testerName != null) ...[
-                                    const SizedBox(height: 16),
-                                    Row(
-                                      children: [
-                                        Text(
-                                          'Lead Tester: ',
-                                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5)),
-                                        ),
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                          decoration: BoxDecoration(
-                                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.05),
-                                            borderRadius: BorderRadius.circular(8),
-                                          ),
-                                          child: Text(
-                                            project.testerName!,
-                                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
+                                    const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      // Team Avatars
+                      TeamAvatars(provider: projectUsersProvider(project.id)),
+                      
+                      // Progress Bar
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 16.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'Done Tasks',
+                                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor),
+                                  ),
+                                  Text(
+                                    '${project.doneProgress}%',
+                                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 6),
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(10),
+                                child: LinearProgressIndicator(
+                                  value: project.doneProgress / 100,
+                                  backgroundColor: Theme.of(context).dividerColor,
+                                  color: Theme.of(context).primaryColor,
+                                  minHeight: 8,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                                   ],
                                 ],
                               ),

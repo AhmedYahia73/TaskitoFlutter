@@ -164,3 +164,15 @@ class TasksNotifier extends StateNotifier<PaginationState<TaskModel>> {
 final tasksProvider = StateNotifierProvider.family<TasksNotifier, PaginationState<TaskModel>, String>((ref, groupId) {
   return TasksNotifier(ref.read(apiServiceProvider), groupId);
 });
+
+final projectUsersProvider = FutureProvider.family<List<UserModel>, String>((ref, projectId) async {
+  final api = ref.read(apiServiceProvider);
+  final response = await api.dio.get('/api/admin/projects/$projectId/users');
+  return (response.data['data']['users'] as List).map((e) => UserModel.fromJson(e)).toList();
+});
+
+final groupUsersProvider = FutureProvider.family<List<UserModel>, String>((ref, groupId) async {
+  final api = ref.read(apiServiceProvider);
+  final response = await api.dio.get('/api/admin/project-groups/$groupId/users');
+  return (response.data['data']['users'] as List).map((e) => UserModel.fromJson(e)).toList();
+});

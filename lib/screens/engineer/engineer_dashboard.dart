@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/dashboard_provider.dart';
 import '../../models/dashboard_stats.dart';
+import 'hrm/my_hrm_view.dart' as hrm;
 
 class EngineerDashboard extends ConsumerStatefulWidget {
   const EngineerDashboard({super.key});
@@ -148,8 +149,9 @@ class _EngineerDashboardState extends ConsumerState<EngineerDashboard> {
           const SizedBox(height: 20),
           GestureDetector(
             onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Processing Attendance...')),
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const hrm.MyHrmView()),
               );
             },
             child: Container(
