@@ -6,6 +6,7 @@ import 'screens/auth/login_page.dart';
 import 'providers/auth_provider.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(
     const ProviderScope(
       child: TaskitoApp(),
@@ -35,6 +36,12 @@ class AuthWrapper extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authProvider);
+
+    if (!authState.isInitialized) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
 
     if (authState.isAuthenticated) {
       return const MainLayout();

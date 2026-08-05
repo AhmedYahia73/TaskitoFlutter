@@ -10,18 +10,21 @@ class AuthState {
   final bool isLoading;
   final String? error;
   final bool isAuthenticated;
+  final bool isInitialized;
 
   AuthState({
     this.isLoading = false,
     this.error,
     this.isAuthenticated = false,
+    this.isInitialized = false,
   });
 
-  AuthState copyWith({bool? isLoading, String? error, bool? isAuthenticated}) {
+  AuthState copyWith({bool? isLoading, String? error, bool? isAuthenticated, bool? isInitialized}) {
     return AuthState(
       isLoading: isLoading ?? this.isLoading,
       error: error ?? this.error,
       isAuthenticated: isAuthenticated ?? this.isAuthenticated,
+      isInitialized: isInitialized ?? this.isInitialized,
     );
   }
 }
@@ -35,7 +38,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
     if (token != null && token.isNotEmpty) {
-      state = state.copyWith(isAuthenticated: true);
+      state = state.copyWith(isAuthenticated: true, isInitialized: true);
+    } else {
+      state = state.copyWith(isAuthenticated: false, isInitialized: true);
     }
   }
 
